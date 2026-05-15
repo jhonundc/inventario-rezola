@@ -1,0 +1,206 @@
+Guía de base de datos — Proyecto Reactiva
+
+A continuación se incluyen los scripts SQL de las tablas creadas en la base de datos:
+
+CREATE TABLE Roles (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    NombreRol NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE Usuarios (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    Nombre NVARCHAR(100) NOT NULL,
+    Usuario NVARCHAR(50) NOT NULL UNIQUE,
+    Correo NVARCHAR(100),
+    PasswordHash NVARCHAR(255) NOT NULL,
+
+    RolId INT NOT NULL,
+
+    Activo BIT DEFAULT 1,
+    FechaCreacion DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Usuarios_Roles
+    FOREIGN KEY (RolId)
+    REFERENCES Roles(Id)
+);
+GO
+
+CREATE TABLE Ubicaciones (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    NombreUbicacion NVARCHAR(150) NOT NULL,
+
+    Descripcion NVARCHAR(255),
+
+    Activo BIT DEFAULT 1,
+
+    FechaCreacion DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE EstadosEquipo (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    NombreEstado NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE Proveedores (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    NombreProveedor NVARCHAR(150) NOT NULL,
+
+    RUC NVARCHAR(20),
+    Telefono NVARCHAR(50),
+    Correo NVARCHAR(100),
+
+    Direccion NVARCHAR(255),
+
+    Activo BIT DEFAULT 1,
+
+    FechaRegistro DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE InventarioHardware (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    TipoEquipo NVARCHAR(100) NOT NULL,
+    DescripcionModelo NVARCHAR(255),
+    Marca NVARCHAR(100),
+
+    Serie NVARCHAR(100) UNIQUE,
+    CodigoPatrimonial NVARCHAR(100) UNIQUE,
+
+    Procesador NVARCHAR(255),
+    RAM NVARCHAR(100),
+    Almacenamiento NVARCHAR(100),
+
+    SistemaOperativo NVARCHAR(100),
+
+    ResponsableId INT,
+    AutorizadoPorId INT,
+
+    UbicacionId INT,
+    EstadoId INT,
+    ProveedorId INT,
+
+    Observaciones NVARCHAR(500),
+
+    FechaRegistro DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Hardware_Responsable
+    FOREIGN KEY (ResponsableId)
+    REFERENCES Usuarios(Id),
+
+    CONSTRAINT FK_Hardware_Autorizado
+    FOREIGN KEY (AutorizadoPorId)
+    REFERENCES Usuarios(Id),
+
+    CONSTRAINT FK_Hardware_Ubicaciones
+    FOREIGN KEY (UbicacionId)
+    REFERENCES Ubicaciones(Id),
+
+    CONSTRAINT FK_Hardware_Estados
+    FOREIGN KEY (EstadoId)
+    REFERENCES EstadosEquipo(Id),
+
+    CONSTRAINT FK_Hardware_Proveedores
+    FOREIGN KEY (ProveedorId)
+    REFERENCES Proveedores(Id)
+);
+GO
+
+CREATE TABLE InventarioSoftware (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    NombreSoftware NVARCHAR(150) NOT NULL,
+
+    TipoSoftware NVARCHAR(100) NOT NULL,
+
+    VersionSoftware NVARCHAR(100),
+
+    ProveedorEntidad NVARCHAR(150),
+
+    TipoLicencia NVARCHAR(100),
+
+    NumeroLicencias INT DEFAULT 0,
+
+    EstadoLicencia NVARCHAR(50),
+
+    EquiposUsuariosAsignados NVARCHAR(255),
+
+    UsoFinalidad NVARCHAR(255),
+
+    ResponsableId INT,
+    AutorizadoPorId INT,
+
+    UbicacionId INT,
+
+    Observaciones NVARCHAR(500),
+
+    FechaRegistro DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Software_Responsable
+    FOREIGN KEY (ResponsableId)
+    REFERENCES Usuarios(Id),
+
+    CONSTRAINT FK_Software_Autorizado
+    FOREIGN KEY (AutorizadoPorId)
+    REFERENCES Usuarios(Id),
+
+    CONSTRAINT FK_Software_Ubicaciones
+    FOREIGN KEY (UbicacionId)
+    REFERENCES Ubicaciones(Id)
+);
+GO
+
+CREATE TABLE HistorialMovimientos (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    HardwareId INT NOT NULL,
+
+    UsuarioResponsableId INT NOT NULL,
+
+    TipoMovimiento NVARCHAR(100) NOT NULL,
+
+    Descripcion NVARCHAR(500),
+
+    FechaMovimiento DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Historial_Hardware
+    FOREIGN KEY (HardwareId)
+    REFERENCES InventarioHardware(Id),
+
+    CONSTRAINT FK_Historial_Usuario
+    FOREIGN KEY (UsuarioResponsableId)
+    REFERENCES Usuarios(Id)
+);
+GO
+
+CREATE TABLE Solicitudes (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+
+    UsuarioSolicitaId INT NOT NULL,
+
+    TipoSolicitud NVARCHAR(100) NOT NULL,
+    Descripcion NVARCHAR(500),
+
+    Estado NVARCHAR(50) DEFAULT 'Pendiente',
+
+    UsuarioApruebaId INT NULL,
+
+    FechaSolicitud DATETIME DEFAULT GETDATE(),
+    FechaRespuesta DATETIME NULL,
+
+    CONSTRAINT FK_Solicitudes_UsuarioSolicita
+    FOREIGN KEY (UsuarioSolicitaId)
+    REFERENCES Usuarios(Id),
+
+    CONSTRAINT FK_Solicitudes_UsuarioAprueba
+    FOREIGN KEY (UsuarioApruebaId)
+    REFERENCES Usuarios(Id)
+);
+GO
